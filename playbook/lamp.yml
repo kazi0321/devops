@@ -1,0 +1,62 @@
+- hosts: all
+  user: vagrant
+  sudo: yes
+  tasks:
+
+    - name: Install Apache
+      yum: name=httpd state=latest
+
+    - name: レポジトリ
+      yum:
+        name: http://dev.mysql.com/get/mysql57-community-release-el6-7.noarch.rpm
+        state: present
+
+    - name: mysqld のインストール
+      yum:
+        name: "mysql-community-server"
+        enablerepo: mysql56-community
+        disablerepo: mysql57-community
+        state: present
+
+    - name: mysqld 起動・自動起動設定
+      service:
+        name=mysqld
+        state=started
+        enabled=yes
+
+    - name: configure mysql
+      shell:
+        mysqladmin -u root password 3anetwork
+        mysql -u root -p3anetwork -e 'create database wq;';
+        mysql -u root -p3anetwork -e 'grant all  privileges on wq.* to "wpadmin@localhost"identified by "password";';
+        mysql -u root -p3anetwork -e 'flush privileges;';
+
+    - name: httpd start
+      service: name=httpd state=started enabled=yes
+
+    - name: Install Remi repo
+      yum: name=http://rpms.famillecollet.com/enterprise/remi-release-7.rpm
+
+    - name: Install php7
+      yum:
+        enablerepo: "remi,remi-php70"
+        state: latest
+        name: "{{ item }}"
+      with_items:
+        - php
+        - php-mysql
+        - php-mbstring
+        - php-intl
+        - php-gd
+
+
+    - name: building wordpress
+      get_url:
+        url: https://ja.wordpress.org/wordpress-4.9.5-ja.zip
+        dest: /tmp
+
+    - name: unarchive wordpress
+      unarchive:
+        src: /tmp/wordpress-4.9.5-ja.zip
+        dest: /var/www/html
+        remote_src: yes
