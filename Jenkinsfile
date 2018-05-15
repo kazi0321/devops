@@ -9,7 +9,7 @@ node {
     }
 
     stage('first job'){
-        dir("${tf_path}""){
+        dir("${tf_path}"){
       sh "${terraform} apply -auto-approve"
     }
   }
